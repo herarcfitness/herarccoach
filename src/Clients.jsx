@@ -1,170 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   EnvelopeIcon, 
   EyeIcon, 
   ArchiveBoxIcon, 
   ChatBubbleLeftIcon,
   FunnelIcon,
-  PlusIcon,
-  XMarkIcon
+  PlusIcon
 } from '@heroicons/react/24/outline';
 
 function Clients() {
   const [statusFilter, setStatusFilter] = useState('active');
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    goals: '',
-    assignedTrainer: '',
-    membershipType: 'Community Arc'
-  });
-
-  // Fetch clients from API
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:3000/api/clients');
-      if (response.ok) {
-        const data = await response.json();
-        setClients(data);
-      } else {
-        console.error('Failed to fetch clients');
-        // Fallback to sample data if API is not available
-        setClients([
-          {
-            id: 1,
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@email.com',
-            status: 'active',
-            lastSignIn: '2 hours ago',
-            program: 'Weight Loss Pro',
-            membership: 'Personal Arc',
-            avatar: 'SJ'
-          },
-          {
-            id: 2,
-            name: 'Mike Chen',
-            email: 'mike.chen@email.com',
-            status: 'active',
-            lastSignIn: '1 day ago',
-            program: 'Muscle Building',
-            membership: 'Guided Arc',
-            avatar: 'MC'
-          },
-          {
-            id: 3,
-            name: 'Emma Rodriguez',
-            email: 'emma.rodriguez@email.com',
-            status: 'pending',
-            lastSignIn: '3 days ago',
-            program: 'Fitness Fundamentals',
-            membership: 'Community Arc',
-            avatar: 'ER'
-          }
-        ]);
-      }
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-      // Fallback to sample data
-      setClients([
-        {
-          id: 1,
-          name: 'Sarah Johnson',
-          email: 'sarah.johnson@email.com',
-          status: 'active',
-          lastSignIn: '2 hours ago',
-          program: 'Weight Loss Pro',
-          membership: 'Personal Arc',
-          avatar: 'SJ'
-        },
-        {
-          id: 2,
-          name: 'Mike Chen',
-          email: 'mike.chen@email.com',
-          status: 'active',
-          lastSignIn: '1 day ago',
-          program: 'Muscle Building',
-          membership: 'Guided Arc',
-          avatar: 'MC'
-        },
-        {
-          id: 3,
-          name: 'Emma Rodriguez',
-          email: 'emma.rodriguez@email.com',
-          status: 'pending',
-          lastSignIn: '3 days ago',
-          program: 'Fitness Fundamentals',
-          membership: 'Community Arc',
-          avatar: 'ER'
-        }
-      ]);
-    } finally {
-      setLoading(false);
+  
+  const [clients, setClients] = useState([
+    {
+      id: 1,
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@email.com',
+      status: 'active',
+      lastSignIn: '2 hours ago',
+      program: 'Weight Loss Pro',
+      membership: 'Personal Arc',
+      avatar: 'SJ'
+    },
+    {
+      id: 2,
+      name: 'Mike Chen',
+      email: 'mike.chen@email.com',
+      status: 'active',
+      lastSignIn: '1 day ago',
+      program: 'Muscle Building',
+      membership: 'Guided Arc',
+      avatar: 'MC'
+    },
+    {
+      id: 3,
+      name: 'Emma Rodriguez',
+      email: 'emma.rodriguez@email.com',
+      status: 'pending',
+      lastSignIn: '3 days ago',
+      program: 'Fitness Fundamentals',
+      membership: 'Community Arc',
+      avatar: 'ER'
+    },
+    {
+      id: 4,
+      name: 'David Thompson',
+      email: 'david.thompson@email.com',
+      status: 'deactivated',
+      lastSignIn: '1 week ago',
+      program: 'Strength Training',
+      membership: 'Personal Arc',
+      avatar: 'DT'
+    },
+    {
+      id: 5,
+      name: 'Lisa Park',
+      email: 'lisa.park@email.com',
+      status: 'active',
+      lastSignIn: '5 hours ago',
+      program: 'Cardio Blast',
+      membership: 'Guided Arc',
+      avatar: 'LP'
+    },
+    {
+      id: 6,
+      name: 'James Wilson',
+      email: 'james.wilson@email.com',
+      status: 'archived',
+      lastSignIn: '2 weeks ago',
+      program: 'Beginner Basics',
+      membership: 'Community Arc',
+      avatar: 'JW'
+    },
+    {
+      id: 7,
+      name: 'Amanda Foster',
+      email: 'amanda.foster@email.com',
+      status: 'active',
+      lastSignIn: '1 hour ago',
+      program: 'Yoga Flow',
+      membership: 'Personal Arc',
+      avatar: 'AF'
+    },
+    {
+      id: 8,
+      name: 'Robert Kim',
+      email: 'robert.kim@email.com',
+      status: 'pending',
+      lastSignIn: '2 days ago',
+      program: 'HIIT Training',
+      membership: 'Guided Arc',
+      avatar: 'RK'
     }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const response = await fetch('http://localhost:3000/api/clients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          status: 'active',
-          lastSignIn: 'Just now',
-          program: 'New Program',
-          avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase()
-        }),
-      });
-
-      if (response.ok) {
-        // Clear form
-        setFormData({
-          name: '',
-          email: '',
-          goals: '',
-          assignedTrainer: '',
-          membershipType: 'Community Arc'
-        });
-        
-        // Close modal
-        setShowModal(false);
-        
-        // Show success message
-        setSuccessMessage('Client added successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
-        
-        // Refresh client list
-        await fetchClients();
-      } else {
-        console.error('Failed to add client');
-        alert('Failed to add client. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error adding client:', error);
-      alert('Error adding client. Please try again.');
-    }
-  };
+  ]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -232,17 +160,6 @@ function Clients() {
     handleStatusChange(clientId, 'deactivated');
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading clients...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -250,13 +167,6 @@ function Clients() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Clients</h1>
         <p className="text-gray-600">Manage your client relationships and track their progress</p>
       </div>
-
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          {successMessage}
-        </div>
-      )}
 
       {/* Controls */}
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
@@ -278,10 +188,7 @@ function Clients() {
               <option value="all">All Clients</option>
             </select>
           </div>
-          <button 
-            onClick={() => setShowModal(true)}
-            className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 flex items-center gap-2"
-          >
+          <button className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 flex items-center gap-2">
             <PlusIcon className="h-4 w-4" />
             Add Client
           </button>
@@ -429,116 +336,6 @@ function Clients() {
           </table>
         </div>
       </div>
-
-      {/* Add Client Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">Add New Client</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter client name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter client email"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Goals
-                </label>
-                <textarea
-                  name="goals"
-                  value={formData.goals}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter client goals"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Assigned Trainer
-                </label>
-                <input
-                  type="text"
-                  name="assignedTrainer"
-                  value={formData.assignedTrainer}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Enter trainer name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Membership Type *
-                </label>
-                <select
-                  name="membershipType"
-                  value={formData.membershipType}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                >
-                  <option value="Community Arc">Community Arc</option>
-                  <option value="Guided Arc">Guided Arc</option>
-                  <option value="Personal Arc">Personal Arc</option>
-                </select>
-              </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
-                >
-                  Add Client
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
