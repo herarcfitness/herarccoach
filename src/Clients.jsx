@@ -6,7 +6,9 @@ import {
   ChatBubbleLeftIcon,
   FunnelIcon,
   PlusIcon,
-  XMarkIcon
+  XMarkIcon,
+  PencilIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 function Clients() {
@@ -14,7 +16,11 @@ function Clients() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [editingStatus, setEditingStatus] = useState(null);
+  const [editingMembership, setEditingMembership] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -166,6 +172,85 @@ function Clients() {
     }
   };
 
+  const handleEditClient = (client) => {
+    setEditingClient(client);
+    setFormData({
+      name: client.name,
+      email: client.email,
+      goals: client.goals || '',
+      assignedTrainer: client.assignedTrainer || '',
+      membershipType: client.membership
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/clients/${editingClient.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...editingClient,
+          ...formData,
+          avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase()
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setClients(clients.map(client => 
+          client.id === editingClient.id 
+            ? { ...client, ...formData, avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase() }
+            : client
+        ));
+        
+        // Close modal
+        setShowEditModal(false);
+        setEditingClient(null);
+        
+        // Show success message
+        setSuccessMessage('Client updated successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        console.error('Failed to update client');
+        alert('Failed to update client. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating client:', error);
+      alert('Error updating client. Please try again.');
+    }
+  };
+
+  const handleStatusChange = (clientId, newStatus) => {
+    setClients(clients.map(client => 
+      client.id === clientId ? { ...client, status: newStatus } : client
+    ));
+    setEditingStatus(null);
+  };
+
+  const handleMembershipChange = (clientId, newMembership) => {
+    setClients(clients.map(client => 
+      client.id === clientId ? { ...client, membership: newMembership } : client
+    ));
+    setEditingMembership(null);
+  };
+
+  const handleArchive = (clientId) => {
+    handleStatusChange(clientId, 'archived');
+  };
+
+  const handleActivate = (clientId) => {
+    handleStatusChange(clientId, 'active');
+  };
+
+  const handleDeactivate = (clientId) => {
+    handleStatusChange(clientId, 'deactivated');
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -213,24 +298,6 @@ function Clients() {
     if (statusFilter === 'all') return true;
     return client.status === statusFilter;
   });
-
-  const handleStatusChange = (clientId, newStatus) => {
-    setClients(clients.map(client => 
-      client.id === clientId ? { ...client, status: newStatus } : client
-    ));
-  };
-
-  const handleArchive = (clientId) => {
-    handleStatusChange(clientId, 'archived');
-  };
-
-  const handleActivate = (clientId) => {
-    handleStatusChange(clientId, 'active');
-  };
-
-  const handleDeactivate = (clientId) => {
-    handleStatusChange(clientId, 'deactivated');
-  };
 
   if (loading) {
     return (
@@ -365,14 +432,71 @@ function Clients() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(client.status)}`}>
-                      {getStatusText(client.status)}
-                    </span>
+                    {editingStatus === client.id ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={client.status}
+                          onChange={(e) => handleStatusChange(client.id, e.target.value)}
+                          className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        >
+                          <option value="active">Active</option>
+                          <option value="pending">Pending</option>
+                          <option value="deactivated">Deactivated</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                        <button
+                          onClick={() => setEditingStatus(null)}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(client.status)}`}>
+                          {getStatusText(client.status)}
+                        </span>
+                        <button
+                          onClick={() => setEditingStatus(client.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <PencilIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMembershipColor(client.membership)}`}>
-                      {client.membership}
-                    </span>
+                    {editingMembership === client.id ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={client.membership}
+                          onChange={(e) => handleMembershipChange(client.id, e.target.value)}
+                          className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        >
+                          <option value="Community Arc">Community Arc</option>
+                          <option value="Guided Arc">Guided Arc</option>
+                          <option value="Personal Arc">Personal Arc</option>
+                        </select>
+                        <button
+                          onClick={() => setEditingMembership(null)}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMembershipColor(client.membership)}`}>
+                          {client.membership}
+                        </span>
+                        <button
+                          onClick={() => setEditingMembership(client.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <PencilIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {client.lastSignIn}
@@ -382,6 +506,13 @@ function Clients() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEditClient(client)}
+                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                        title="Edit client"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
                       <button
                         className="text-pink-600 hover:text-pink-900 p-1 rounded"
                         title="Message client"
@@ -533,6 +664,122 @@ function Clients() {
                   className="flex-1 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
                 >
                   Add Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Client Modal */}
+      {showEditModal && editingClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Edit Client</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingClient(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client email"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Goals
+                </label>
+                <textarea
+                  name="goals"
+                  value={formData.goals}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client goals"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assigned Trainer
+                </label>
+                <input
+                  type="text"
+                  name="assignedTrainer"
+                  value={formData.assignedTrainer}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter trainer name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Membership Type *
+                </label>
+                <select
+                  name="membershipType"
+                  value={formData.membershipType}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="Community Arc">Community Arc</option>
+                  <option value="Guided Arc">Guided Arc</option>
+                  <option value="Personal Arc">Personal Arc</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingClient(null);
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
+                >
+                  Update Client
                 </button>
               </div>
             </form>
