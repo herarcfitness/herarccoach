@@ -6,279 +6,14 @@ import {
   ChatBubbleLeftIcon,
   FunnelIcon,
   PlusIcon,
-  XMarkIcon,
-  PencilIcon,
-  CheckIcon
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-
-// Separate component for inline status editing
-const StatusEditor = ({ client, onStatusChange }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempStatus, setTempStatus] = useState(client.status);
-
-  const handleSave = () => {
-    onStatusChange(client.id, tempStatus);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setTempStatus(client.status);
-    setIsEditing(false);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'deactivated': return 'bg-red-100 text-red-800';
-      case 'archived': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'active': return 'Active';
-      case 'pending': return 'Pending';
-      case 'deactivated': return 'Deactivated';
-      case 'archived': return 'Archived';
-      default: return status;
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <div className="flex items-center gap-2">
-        <select
-          value={tempStatus}
-          onChange={(e) => setTempStatus(e.target.value)}
-          className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-pink-500"
-        >
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="deactivated">Deactivated</option>
-          <option value="archived">Archived</option>
-        </select>
-        <button onClick={handleSave} className="text-green-600 hover:text-green-800">
-          <CheckIcon className="h-4 w-4" />
-        </button>
-        <button onClick={handleCancel} className="text-red-600 hover:text-red-800">
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(client.status)}`}>
-        {getStatusText(client.status)}
-      </span>
-      <button
-        onClick={() => setIsEditing(true)}
-        className="text-gray-400 hover:text-gray-600"
-      >
-        <PencilIcon className="h-3 w-3" />
-      </button>
-    </div>
-  );
-};
-
-// Separate component for inline membership editing
-const MembershipEditor = ({ client, onMembershipChange }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempMembership, setTempMembership] = useState(client.membership);
-
-  const handleSave = () => {
-    onMembershipChange(client.id, tempMembership);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setTempMembership(client.membership);
-    setIsEditing(false);
-  };
-
-  const getMembershipColor = (membership) => {
-    switch (membership) {
-      case 'Personal Arc': return 'bg-purple-100 text-purple-800';
-      case 'Guided Arc': return 'bg-blue-100 text-blue-800';
-      case 'Community Arc': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <div className="flex items-center gap-2">
-        <select
-          value={tempMembership}
-          onChange={(e) => setTempMembership(e.target.value)}
-          className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-pink-500"
-        >
-          <option value="Community Arc">Community Arc</option>
-          <option value="Guided Arc">Guided Arc</option>
-          <option value="Personal Arc">Personal Arc</option>
-        </select>
-        <button onClick={handleSave} className="text-green-600 hover:text-green-800">
-          <CheckIcon className="h-4 w-4" />
-        </button>
-        <button onClick={handleCancel} className="text-red-600 hover:text-red-800">
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMembershipColor(client.membership)}`}>
-        {client.membership}
-      </span>
-      <button
-        onClick={() => setIsEditing(true)}
-        className="text-gray-400 hover:text-gray-600"
-      >
-        <PencilIcon className="h-3 w-3" />
-      </button>
-    </div>
-  );
-};
-
-// Separate component for the client form modal
-const ClientFormModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  formData, 
-  setFormData, 
-  title, 
-  submitText 
-}) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              placeholder="Enter client name"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email *
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              placeholder="Enter client email"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Goals
-            </label>
-            <textarea
-              name="goals"
-              value={formData.goals}
-              onChange={handleInputChange}
-              rows="3"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              placeholder="Enter client goals"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assigned Trainer
-            </label>
-            <input
-              type="text"
-              name="assignedTrainer"
-              value={formData.assignedTrainer}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              placeholder="Enter trainer name"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Membership Type *
-            </label>
-            <select
-              name="membershipType"
-              value={formData.membershipType}
-              onChange={handleInputChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="Community Arc">Community Arc</option>
-              <option value="Guided Arc">Guided Arc</option>
-              <option value="Personal Arc">Personal Arc</option>
-            </select>
-          </div>
-          
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
-            >
-              {submitText}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 function Clients() {
   const [statusFilter, setStatusFilter] = useState('active');
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -376,6 +111,14 @@ function Clients() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -423,78 +166,57 @@ function Clients() {
     }
   };
 
-  const handleEditClient = (client) => {
-    setEditingClient(client);
-    setFormData({
-      name: client.name,
-      email: client.email,
-      goals: client.goals || '',
-      assignedTrainer: client.assignedTrainer || '',
-      membershipType: client.membership
-    });
-    setShowEditModal(true);
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const response = await fetch(`http://localhost:3000/api/clients/${editingClient.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...editingClient,
-          ...formData,
-          avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase()
-        }),
-      });
-
-      if (response.ok) {
-        // Update local state
-        setClients(clients.map(client => 
-          client.id === editingClient.id 
-            ? { ...client, ...formData, avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase() }
-            : client
-        ));
-        
-        // Close modal
-        setShowEditModal(false);
-        setEditingClient(null);
-        
-        // Show success message
-        setSuccessMessage('Client updated successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        console.error('Failed to update client');
-        alert('Failed to update client. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error updating client:', error);
-      // Update local state even if API fails (for demo purposes)
-      setClients(clients.map(client => 
-        client.id === editingClient.id 
-          ? { ...client, ...formData, avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase() }
-          : client
-      ));
-      
-      setShowEditModal(false);
-      setEditingClient(null);
-      setSuccessMessage('Client updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'deactivated':
+        return 'bg-red-100 text-red-800';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'active':
+        return 'Active';
+      case 'pending':
+        return 'Pending';
+      case 'deactivated':
+        return 'Deactivated';
+      case 'archived':
+        return 'Archived';
+      default:
+        return status;
+    }
+  };
+
+  const getMembershipColor = (membership) => {
+    switch (membership) {
+      case 'Personal Arc':
+        return 'bg-purple-100 text-purple-800';
+      case 'Guided Arc':
+        return 'bg-blue-100 text-blue-800';
+      case 'Community Arc':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const filteredClients = clients.filter(client => {
+    if (statusFilter === 'all') return true;
+    return client.status === statusFilter;
+  });
 
   const handleStatusChange = (clientId, newStatus) => {
     setClients(clients.map(client => 
       client.id === clientId ? { ...client, status: newStatus } : client
-    ));
-  };
-
-  const handleMembershipChange = (clientId, newMembership) => {
-    setClients(clients.map(client => 
-      client.id === clientId ? { ...client, membership: newMembership } : client
     ));
   };
 
@@ -509,11 +231,6 @@ function Clients() {
   const handleDeactivate = (clientId) => {
     handleStatusChange(clientId, 'deactivated');
   };
-
-  const filteredClients = clients.filter(client => {
-    if (statusFilter === 'all') return true;
-    return client.status === statusFilter;
-  });
 
   if (loading) {
     return (
@@ -648,10 +365,14 @@ function Clients() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusEditor client={client} onStatusChange={handleStatusChange} />
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(client.status)}`}>
+                      {getStatusText(client.status)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <MembershipEditor client={client} onMembershipChange={handleMembershipChange} />
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMembershipColor(client.membership)}`}>
+                      {client.membership}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {client.lastSignIn}
@@ -661,13 +382,6 @@ function Clients() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEditClient(client)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        title="Edit client"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
                       <button
                         className="text-pink-600 hover:text-pink-900 p-1 rounded"
                         title="Message client"
@@ -717,29 +431,114 @@ function Clients() {
       </div>
 
       {/* Add Client Modal */}
-      <ClientFormModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleSubmit}
-        formData={formData}
-        setFormData={setFormData}
-        title="Add New Client"
-        submitText="Add Client"
-      />
-
-      {/* Edit Client Modal */}
-      <ClientFormModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingClient(null);
-        }}
-        onSubmit={handleEditSubmit}
-        formData={formData}
-        setFormData={setFormData}
-        title="Edit Client"
-        submitText="Update Client"
-      />
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Client</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client email"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Goals
+                </label>
+                <textarea
+                  name="goals"
+                  value={formData.goals}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter client goals"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assigned Trainer
+                </label>
+                <input
+                  type="text"
+                  name="assignedTrainer"
+                  value={formData.assignedTrainer}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter trainer name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Membership Type *
+                </label>
+                <select
+                  name="membershipType"
+                  value={formData.membershipType}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="Community Arc">Community Arc</option>
+                  <option value="Guided Arc">Guided Arc</option>
+                  <option value="Personal Arc">Personal Arc</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
+                >
+                  Add Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
