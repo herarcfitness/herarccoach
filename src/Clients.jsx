@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { BACKEND_URL } from './API/config';
 
+
 function Clients() {
   const [statusFilter, setStatusFilter] = useState('active');
   const [clients, setClients] = useState([]);
@@ -27,87 +28,34 @@ function Clients() {
 
   // Fetch clients from API
   useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('https://herarcbackend.onrender.com/api/clients');
+        const data = await response.json();
+        console.log("Fetched clients:", data);
+        setClients(data);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false); // 👈 MAKE SURE THIS IS HERE
+      }
+    };
+  
     fetchClients();
   }, []);
 
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/clients');
+      const response = await fetch('http://herarcbackend.onrender.com/api/clients');
       if (response.ok) {
         const data = await response.json();
         setClients(data);
       } else {
         console.error('Failed to fetch clients');
-        // Fallback to sample data if API is not available
-        setClients([
-          {
-            id: 1,
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@email.com',
-            status: 'active',
-            lastSignIn: '2 hours ago',
-            program: 'Weight Loss Pro',
-            membership: 'Personal Arc',
-            avatar: 'SJ'
-          },
-          {
-            id: 2,
-            name: 'Mike Chen',
-            email: 'mike.chen@email.com',
-            status: 'active',
-            lastSignIn: '1 day ago',
-            program: 'Muscle Building',
-            membership: 'Guided Arc',
-            avatar: 'MC'
-          },
-          {
-            id: 3,
-            name: 'Emma Rodriguez',
-            email: 'emma.rodriguez@email.com',
-            status: 'pending',
-            lastSignIn: '3 days ago',
-            program: 'Fitness Fundamentals',
-            membership: 'Community Arc',
-            avatar: 'ER'
-          }
-        ]);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
-      // Fallback to sample data
-      setClients([
-        {
-          id: 1,
-          name: 'Sarah Johnson',
-          email: 'sarah.johnson@email.com',
-          status: 'active',
-          lastSignIn: '2 hours ago',
-          program: 'Weight Loss Pro',
-          membership: 'Personal Arc',
-          avatar: 'SJ'
-        },
-        {
-          id: 2,
-          name: 'Mike Chen',
-          email: 'mike.chen@email.com',
-          status: 'active',
-          lastSignIn: '1 day ago',
-          program: 'Muscle Building',
-          membership: 'Guided Arc',
-          avatar: 'MC'
-        },
-        {
-          id: 3,
-          name: 'Emma Rodriguez',
-          email: 'emma.rodriguez@email.com',
-          status: 'pending',
-          lastSignIn: '3 days ago',
-          program: 'Fitness Fundamentals',
-          membership: 'Community Arc',
-          avatar: 'ER'
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -125,7 +73,7 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:3000/api/clients', {
+      const response = await fetch('http://herarcbackend.onrender.com/api/clients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,7 +130,7 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:3000/api/clients/${editingClient.id}`, {
+      const response = await fetch(`http://herarcbackend.onrender.com/api/clients/${editingClient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
