@@ -7,7 +7,7 @@ import Overview from './Overview';
 import Messages from './Messages';
 import Groups from './Groups';
 import Challenges from './Challenges';
-import Clients from './Clients';
+import Clients from './Client Components/Clients';
 import Team from './Team';
 import Payments from './Payments';
 import MasterLibraries from './MasterLibraries';

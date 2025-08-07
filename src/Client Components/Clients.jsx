@@ -9,7 +9,7 @@ import {
   XMarkIcon,
   PencilIcon
 } from '@heroicons/react/24/outline';
-import { BACKEND_URL } from './API/config';
+import { BACKEND_URL } from '../API/config';
 
 
 function Clients() {
