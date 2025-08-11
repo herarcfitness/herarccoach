@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { BACKEND_URL } from './API/config';
 
 function WebMessageSender() {
   const [input, setInput] = useState('');
 
   const sendMessage = () => {
-    fetch('http://localhost:3000/api/message', {
+    fetch(`${BACKEND_URL}/api/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newMessage: input }),

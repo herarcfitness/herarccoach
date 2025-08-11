@@ -30,7 +30,7 @@ function Clients() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('https://herarcbackend.onrender.com/api/clients');
+        const response = await fetch(`${BACKEND_URL}/api/clients`);
         const data = await response.json();
         console.log("Fetched clients:", data);
         setClients(data);
@@ -47,7 +47,7 @@ function Clients() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://herarcbackend.onrender.com/api/clients');
+      const response = await fetch(`${BACKEND_URL}/api/clients`);
       if (response.ok) {
         const data = await response.json();
         setClients(data);
@@ -73,7 +73,7 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://herarcbackend.onrender.com/api/clients', {
+      const response = await fetch(`${BACKEND_URL}/api/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://herarcbackend.onrender.com/api/clients/${editingClient.id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/clients/${editingClient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

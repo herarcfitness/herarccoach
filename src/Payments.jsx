@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { BACKEND_URL } from './API/config';
 
 export default function Payments() {
   const [payments, setPayments] = useState([]);
@@ -11,7 +12,7 @@ export default function Payments() {
     (async () => {
       try {
         // Use your live backend URL to dodge proxy/CORS weirdness.
-        const res = await axios.get('https://herarcbackend.onrender.com/api/payments', { timeout: 15000 });
+        const res = await axios.get(`${BACKEND_URL}/api/payments`, { timeout: 15000 });
         const data = Array.isArray(res.data) ? res.data : [];
         if (isMounted) setPayments(data);
       } catch (e) {
