@@ -1,11 +1,4 @@
-/*export default function Overview() {
-    return (
-      <div className="text-xl font-semibold text-gray-800">
-        Payments Screen Placeholder
-      </div>
-    );
-  }*/
-    import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 
 export default function Payments() {
@@ -14,68 +7,77 @@ export default function Payments() {
   const [err, setErr] = useState(null);
 
   useEffect(() => {
-    const fetchPayments = async () => {
+    let isMounted = true;
+    (async () => {
       try {
-        const res = await axios.get('/api/payments'); // backend must expose this
-        setPayments(res.data || []);
+        // Use your live backend URL to dodge proxy/CORS weirdness.
+        const res = await axios.get('https://herarcbackend.onrender.com/api/payments', { timeout: 15000 });
+        const data = Array.isArray(res.data) ? res.data : [];
+        if (isMounted) setPayments(data);
       } catch (e) {
-        console.error(e);
-        setErr('Could not load payments.');
+        console.error('Payments fetch failed:', e?.message || e);
+        if (isMounted) setErr('Could not load payments.');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
-    };
-    fetchPayments();
+    })();
+    return () => { isMounted = false; };
   }, []);
 
-  // helpers
-  const fmtCurrency = (n, currency = 'usd') =>
-    new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-      maximumFractionDigits: 2,
-    }).format(n || 0);
+  const fmtCurrency = (n, currency = 'USD') => {
+    const amount = Number.isFinite(n) ? Number(n) : 0;
+    const code = typeof currency === 'string' && currency.trim() ? currency.toUpperCase() : 'USD';
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: code, maximumFractionDigits: 2 }).format(amount);
+    } catch {
+      return `$${amount.toFixed(2)}`;
+    }
+  };
 
-  // stats from payment intents (counts only "succeeded")
-  const succeeded = useMemo(
-    () => payments.filter(p => (p.status || '').toLowerCase() === 'succeeded'),
-    [payments]
-  );
+  const safePayments = useMemo(() => (Array.isArray(payments) ? payments : []), [payments]);
+
+  const succeeded = useMemo(() => {
+    try {
+      return safePayments.filter(p => String(p?.status || '').toLowerCase() === 'succeeded');
+    } catch {
+      return [];
+    }
+  }, [safePayments]);
 
   const totalRevenue = useMemo(
-    () => succeeded.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
+    () => succeeded.reduce((sum, p) => sum + (Number(p?.amount) || 0), 0),
     [succeeded]
   );
 
   const thisMonthRevenue = useMemo(() => {
     const now = new Date();
-    return succeeded
-      .filter(p => {
-        const d = new Date(p.created);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    return succeeded.reduce((sum, p) => {
+      const d = p?.created ? new Date(p.created) : null;
+      if (d && !Number.isNaN(d.getTime()) && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        return sum + (Number(p?.amount) || 0);
+      }
+      return sum;
+    }, 0);
   }, [succeeded]);
 
-  // crude "active subs" proxy = unique customers with a succeeded payment in last 30 days
   const activeSubs = useMemo(() => {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const setIds = new Set(
-      succeeded
-        .filter(p => new Date(p.created).getTime() >= cutoff)
-        .map(p => p.customer || p.id) // fallback just in case
-    );
-    return setIds.size;
+    const ids = new Set();
+    for (const p of succeeded) {
+      const t = p?.created ? new Date(p.created).getTime() : NaN;
+      if (Number.isFinite(t) && t >= cutoff) ids.add(p?.customer || p?.id || Math.random());
+    }
+    return ids.size;
   }, [succeeded]);
 
   if (loading) return <div className="p-6">Loading payments…</div>;
-  if (err) return <div className="p-6 text-red-600">{err}</div>;
+  // Don’t crash render if there’s an error—just show the UI with zeros/empty state.
+  // if (err) return <div className="p-6 text-red-600">{err}</div>;
 
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Payments</h1>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded shadow">
           <p className="text-gray-500 text-sm">Total Revenue</p>
@@ -91,37 +93,39 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Filters/Search (UI only for now) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="flex gap-2 mb-2 sm:mb-0">
-          <select className="border rounded p-2 text-sm">
-            <option>All Statuses</option>
-            <option>Succeeded</option>
-            <option>Processing</option>
-            <option>Requires Action</option>
-            <option>Canceled</option>
+          <select className="border rounded p-2 text-sm" defaultValue="all">
+            <option value="all">All Statuses</option>
+            <option value="succeeded">Succeeded</option>
+            <option value="processing">Processing</option>
+            <option value="requires_action">Requires Action</option>
+            <option value="canceled">Canceled</option>
           </select>
           <button
             className="bg-gray-100 px-4 py-2 text-sm rounded hover:bg-gray-200"
             onClick={() => {
-              // quick CSV export of what's loaded
-              const headers = ['id','customer','status','created','amount','currency'];
-              const rows = payments.map(p => [
-                p.id,
-                p.customer || '',
-                p.status || '',
-                p.created || '',
-                p.amount || 0,
-                (p.currency || 'usd').toUpperCase(),
-              ]);
-              const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `payments_${Date.now()}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
+              try {
+                const headers = ['id','customer','status','created','amount','currency'];
+                const rows = safePayments.map(p => [
+                  p?.id ?? '',
+                  p?.customer ?? '',
+                  p?.status ?? '',
+                  p?.created ?? '',
+                  String(p?.amount ?? 0),
+                  String((p?.currency ?? 'USD')).toUpperCase(),
+                ]);
+                const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payments_${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (e) {
+                console.error('CSV export failed:', e);
+              }
             }}
           >
             Export CSV
@@ -135,7 +139,6 @@ export default function Payments() {
         />
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm bg-white rounded shadow">
           <thead>
@@ -148,24 +151,28 @@ export default function Payments() {
             </tr>
           </thead>
           <tbody>
-            {payments.length === 0 ? (
+            {safePayments.length === 0 ? (
               <tr>
                 <td className="p-3 text-gray-500 italic" colSpan="5">
-                  No payment records yet.
+                  {err ? 'No payment records yet (fetch failed).' : 'No payment records yet.'}
                 </td>
               </tr>
             ) : (
-              payments.map(p => (
-                <tr key={p.id} className="border-b">
-                  <td className="p-3">{p.customer || 'N/A'}</td>
-                  <td className="p-3 capitalize">{p.status}</td>
-                  <td className="p-3">
-                    {p.created ? new Date(p.created).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="p-3">{fmtCurrency(p.amount, p.currency)}</td>
-                  <td className="p-3">{(p.currency || 'usd').toUpperCase()}</td>
-                </tr>
-              ))
+              safePayments.map((p) => {
+                const created = p?.created ? new Date(p.created) : null;
+                const createdStr = created && !Number.isNaN(created.getTime())
+                  ? created.toLocaleDateString()
+                  : '-';
+                return (
+                  <tr key={p?.id || Math.random()} className="border-b">
+                    <td className="p-3">{p?.customer || 'N/A'}</td>
+                    <td className="p-3 capitalize">{p?.status || 'unknown'}</td>
+                    <td className="p-3">{createdStr}</td>
+                    <td className="p-3">{fmtCurrency(p?.amount, p?.currency)}</td>
+                    <td className="p-3">{String(p?.currency || 'USD').toUpperCase()}</td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
