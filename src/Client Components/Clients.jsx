@@ -23,31 +23,14 @@ function Clients() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    membershipType: 'Community Arc'
+    membership: 'Community Arc'
   });
 
   // Fetch clients from API
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await fetch('https://herarcbackend.onrender.com/api/clients');
-        const data = await response.json();
-        console.log("Fetched clients:", data);
-        setClients(data);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setLoading(false); // 👈 MAKE SURE THIS IS HERE
-      }
-    };
-  
-    fetchClients();
-  }, []);
-
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://herarcbackend.onrender.com/api/clients');
+      const response = await fetch(`${BACKEND_URL}/clients`);
       if (response.ok) {
         const data = await response.json();
         setClients(data);
@@ -61,6 +44,10 @@ function Clients() {
     }
   };
 
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -73,7 +60,7 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://herarcbackend.onrender.com/api/clients', {
+      const response = await fetch(`${BACKEND_URL}/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,16 +75,16 @@ function Clients() {
       });
 
       if (response.ok) {
-        const newClient = await response.json();
-        
-        // Add new client to the list
-        setClients(prev => [...prev, newClient]);
-        
+        await response.json();
+
+        // Refresh client list
+        await fetchClients();
+
         // Clear form
         setFormData({
           name: '',
           email: '',
-          membershipType: 'Community Arc'
+          membership: 'Community Arc'
         });
         
         // Close modal
@@ -121,7 +108,7 @@ function Clients() {
     setFormData({
       name: client.name,
       email: client.email,
-      membershipType: client.membership
+      membership: client.membership
     });
     setShowEditModal(true);
   };
@@ -130,25 +117,20 @@ function Clients() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://herarcbackend.onrender.com/api/clients/${editingClient.id}`, {
+      const response = await fetch(`${BACKEND_URL}/clients/${editingClient._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...editingClient,
           ...formData,
           avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase()
         }),
       });
 
       if (response.ok) {
-        // Update local state
-        setClients(clients.map(client => 
-          client.id === editingClient.id 
-            ? { ...client, ...formData, avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase() }
-            : client
-        ));
+        // Refresh client list with updated data
+        await fetchClients();
         
         // Close modal
         setShowEditModal(false);
@@ -164,8 +146,8 @@ function Clients() {
     } catch (error) {
       console.error('Error updating client:', error);
       // Update local state even if API fails (for demo purposes)
-      setClients(clients.map(client => 
-        client.id === editingClient.id 
+      setClients(clients.map(client =>
+        client._id === editingClient._id
           ? { ...client, ...formData, avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase() }
           : client
       ));
@@ -226,8 +208,8 @@ function Clients() {
   });
 
   const handleStatusChange = (clientId, newStatus) => {
-    setClients(clients.map(client => 
-      client.id === clientId ? { ...client, status: newStatus } : client
+    setClients(clients.map(client =>
+      client._id === clientId ? { ...client, status: newStatus } : client
     ));
   };
 
@@ -354,7 +336,7 @@ function Clients() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50">
+                <tr key={client._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -414,7 +396,7 @@ function Clients() {
                       </button>
                       {client.status === 'active' && (
                         <button
-                          onClick={() => handleDeactivate(client.id)}
+                          onClick={() => handleDeactivate(client._id)}
                           className="text-yellow-600 hover:text-yellow-900 p-1 rounded"
                           title="Deactivate client"
                         >
@@ -423,7 +405,7 @@ function Clients() {
                       )}
                       {client.status === 'deactivated' && (
                         <button
-                          onClick={() => handleActivate(client.id)}
+                          onClick={() => handleActivate(client._id)}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Activate client"
                         >
@@ -432,7 +414,7 @@ function Clients() {
                       )}
                       {client.status !== 'archived' && (
                         <button
-                          onClick={() => handleArchive(client.id)}
+                          onClick={() => handleArchive(client._id)}
                           className="text-gray-600 hover:text-gray-900 p-1 rounded"
                           title="Archive client"
                         >
@@ -498,8 +480,8 @@ function Clients() {
                   Membership Type *
                 </label>
                 <select
-                  name="membershipType"
-                  value={formData.membershipType}
+                  name="membership"
+                  value={formData.membership}
                   onChange={handleInputChange}
                   required
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -583,8 +565,8 @@ function Clients() {
                   Membership Type *
                 </label>
                 <select
-                  name="membershipType"
-                  value={formData.membershipType}
+                  name="membership"
+                  value={formData.membership}
                   onChange={handleInputChange}
                   required
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
