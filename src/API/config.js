@@ -1,1 +1,1 @@
-export const BACKEND_URL = 'https://herarcbackend.onrender.com';
+export const BACKEND_URL = "https://herarcbackend.onrender.com";
